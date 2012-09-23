@@ -1,0 +1,142 @@
+<script>
+
+    $( llenalo );
+
+    function llenalo() {
+        var canvas = document.getElementById("layer1");
+        var ctx = canvas.getContext("2d");
+        var layer2 = document.getElementById("layer2");
+        var ctx2 = layer2.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx2.clearRect(0, 0, layer2.width, layer2.height);
+        var cX = new Array();
+        var cY = new Array();
+        var i,j;
+        var n=$('#newN').val();
+        var cR=20; // radio de los circulos
+        var dMinQ=Math.pow(cR*2,2); //cuadrado de la distancia minima
+        var distanciaQ;
+        var dX, dY;
+        var ocurrencias=0;
+        var cvW=800;
+        var cvH=400;
+        
+        if (!n) {n=1;}
+        
+        function creaBola(cX,cY,cR,colore,n){
+            //if (n==0) {colore="#33cccc";}
+            ctx.globalAlpha = 0.75;
+            ctx.fillStyle = colore;
+            ctx.beginPath();
+            ctx.arc(cX, cY, cR, 0, Math.PI*2, true);
+            ctx.closePath();
+            ctx.fill();
+            if($("#numbers").attr("checked")==true)
+            {
+                ctx2.textAlign = "center";
+                ctx2.font = "10pt Arial";
+                ctx2.fillText(n, cX, cY+5);
+            }
+        }
+    
+        function generaCentros(n,cR,canvasW,canvasH){ // genera un arreglo bidimensional con n coordenadas separadas entre si por una distancia mayor a cR
+            for (i=0;i<n;i++) {
+                cX[i]=Math.round((Math.random() * (canvasW-cR*2)))+cR;
+                cY[i]=Math.round((Math.random() * (canvasH-cR*2)))+cR;
+                if (i>0) {
+                    mideDistancias(i);
+                }
+                //console.log("P"+i+"("+cX[i]+","+cY[i]+")");
+            }
+            despliegaBolas(n);
+        }
+
+        function mideDistancias(n) {
+            for (i=0;i<n;i++) {
+                dX=cX[n]-cX[i];
+                dY=cY[n]-cY[i];
+                distanciaQ=Math.round(Math.pow(dX,2)+Math.pow(dY,2));
+                //console.log("p"+n+" a p"+i+"="+Math.round(Math.pow(distanciaQ,0.5)));
+                if (distanciaQ<dMinQ) {
+            
+                    if($("#attempts").attr("checked")==true) {              
+                        ctx2.beginPath();
+                        ctx2.arc(cX[n], cY[n], cR, 0, Math.PI*2, true);
+                        ctx2.closePath();
+                        ctx2.strokeStyle = "#cccc99";
+                        ctx2.lineWidth = 1;
+                        ctx2.stroke();
+                    }
+
+                    if($("#radii").attr("checked")==true) {
+                        ctx2.globalAlpha = 0.5;
+                        ctx2.beginPath();
+                        ctx2.moveTo(cX[n],cY[n]);
+                        ctx2.lineTo(cX[i],cY[i]);
+                        ctx2.strokeStyle = "#808066";
+                        ctx2.lineWidth = 1;
+                        ctx2.stroke();
+                    }
+                    //ctx2.font = "8pt Arial";
+                    //ctx2.fillText(n, cX[n], cY[n]);
+            
+                    //console.log("- - - - - - - De p"+n+" a p"+i+"="+Math.round(Math.pow(distanciaQ,0.5)));
+                    
+                    cX[n]=Math.round((Math.random() * (cvW-cR*2)))+cR;
+                    cY[n]=Math.round((Math.random() * (cvH-cR*2)))+cR;
+                    
+                    i=0; // para inicializar el for
+                    
+                    dX=cX[n]-cX[i];
+                    dY=cY[n]-cY[i];
+                    
+                    distanciaQ=Math.round(Math.pow(dX,2)+Math.pow(dY,2));
+                    
+                    ocurrencias=ocurrencias+1;
+                    i=i-1; //// para que cuente el punto 0
+                }
+            }
+        };
+        
+
+        function despliegaBolas(n) {
+            sR=0;
+    
+            var tempo=setInterval (function() { 
+                change=cR-sR;
+                sR=sR+Math.ceil((change/2));
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (j=0;j<n;j++) {
+                    eR=sR+(cR/n)*j;
+                    if (eR>cR) {eR=cR;}
+                    creaBola(cX[j],cY[j],eR,'#cc3311',j)
+                    //tempo[j]=setTimeout (function() { creaBola(cX[j],j*10,j*5,'#cc3311',j);}, j*200 );
+                }
+                if (sR>cR-1) {
+                    clearInterval(tempo);
+                }
+            }, 40 );
+        };
+        
+        if (n>120) {
+            $('#boton').html('Are you sure? <span style="font-size:10px">This will probably crash your browser');
+            $('#boton').animate({
+                backgroundColor: "#cc0000"
+              }, 500 );
+        } else {
+            $('#boton').html('Go again &raquo;');
+            $('#boton').animate({
+                backgroundColor: "#3399ff"
+            }, 500 );
+            generaCentros(n,cR,cvW,cvH);
+        }
+        
+
+        console.log("Hubieron " + ocurrencias + " traslapes");
+        $('#cuantas').replaceWith('<div id="cuantas">Overlap attempts: '+ocurrencias+'</div>');
+
+        //unaBola(100,60,10,"#cc3311");
+    };
+    
+ 
+</script>

@@ -1,0 +1,22 @@
+body {
+	margin: 0;
+	padding: 0;
+}
+#playArea {
+	display: none;
+	background: red;
+}
+#battleArea {
+	background: blue;
+	margin: 0 auto;
+	position: relative;
+}
+.island {
+	position: absolute;
+	top: 0;
+	left: 0;
+	background: green;
+	border: 0;
+	line-height: 40px;
+	text-align: center;
+}
