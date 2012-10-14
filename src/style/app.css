@@ -5,18 +5,48 @@ body {
 #playArea {
 	display: none;
 	background: red;
+	overflow: hidden;
 }
 #battleArea {
 	background: blue;
-	margin: 0 auto;
 	position: relative;
 }
 .island {
-	position: absolute;
-	top: 0;
-	left: 0;
+	position: relative;
+	top: 1px;
+	left: 1px;
 	background: green;
 	border: 0;
 	line-height: 40px;
 	text-align: center;
+	cursor: pointer;
+}
+.islandOuter {
+	position: absolute;
+	top: 0;
+	left: 0;
+	background: white;
+	border: 0;
+}
+.owner-1 {
+	background: red;
+}
+.owner1 {
+	background: gray;
+}
+.portrait {
+	-moz-transform: rotate(90deg);
+	-webkit-transform: rotate(90deg);
+	-o-transform: rotate(90deg);
+	transform: rotate(90deg);
+	-moz-transform-origin: 50% 50%;
+	-webkit-transform-origin: 50% 50%;
+	-o-transform-origin: 50% 50%;
+	transform-origin: 50% 50%;
+}
+.portrait .island {
+	-moz-transform: rotate(-90deg);
+	-webkit-transform: rotate(-90deg);
+	-o-transform: rotate(-90deg);
+	transform: rotate(-90deg);
 }
