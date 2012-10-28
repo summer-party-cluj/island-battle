@@ -10,6 +10,10 @@
 		inslandsNr: 10,
 		islands: [],
 		ratioDraw: 1,
+		growSpeed: 4,
+		startLocationIndex: -1,
+		computerIslands: [],
+		computerReady: false,
 		generateRandomDim: function () {
 			return Math.round(my.minRad + Math.random() * (my.maxRad - my.minRad));
 		},
@@ -38,13 +42,159 @@
                 }
             }
 		},
+		updateIslandVal: function (islandEl, island) {
+			/**
+			 * @description Update island population
+			 */
+			islandEl = islandEl || null;
+			if (!islandEl) {
+				islandEl = document.getElementById("island" + island.index);
+			}
+			islandEl.innerHTML = island.val;
+		},
+		startGrowRate: function (island, fromMove) {
+			/**
+			 * @description Calculate & start grow rate for island
+			 *	available only if island has computer or player population 
+			 *  and if population is greather then 0
+			 * @params island - object containing information for island
+			 */
+			var time,
+				maxPop;
+			fromMove = fromMove || false;
+			if (island.owner !== 0 && island.val > 0) {
+				if (island.growTimer) {
+					maxPop = island.rad * 2;
+					if (!fromMove && island.val < maxPop) {
+						island.val = island.val + 1;
+						my.updateIslandVal("", island);
+					}
+				} else {
+					time = my.maxRad / island.initVal * (2000 / my.growSpeed);
+					time = parseInt(time, 10);
+					//console.log(time + " for island with index " +island.index);
+					island.growTimer = setInterval(function() { my.startGrowRate(island); }, time);
+				}
+			} else {
+				if (island.growTimer) {
+					clearInterval(island.growTimer);
+				}
+			}
+		},
+		testGameEnd: function () {
+			var i,
+				inslandsNr,
+				hasComputer = false,
+				hasHuman = false,
+				thisOwner,
+				gameEnded = true;
+			inslandsNr = my.inslandsNr;
+			for (i = 0; i < inslandsNr; i = i + 1) {
+				thisOwner = my.islands[i].owner;
+				if (thisOwner === 1) {
+					hasHuman = true;
+				} else if (thisOwner === -1) {
+					hasComputer = true;
+				}
+				if (hasHuman && hasComputer) {
+					gameEnded = false;
+					break;
+				}
+			}
+			if (gameEnded) {
+				for (i = 0; i < inslandsNr; i = i + 1) {
+					if (my.islands[i].growTimer) {
+						clearInterval(my.islands[i].growTimer);
+					}
+				}
+				if (hasHuman) {
+					alert("You won!");
+				} else {
+					alert("You loose!");
+				}
+			}
+		},
+		movePopulation: function (startIndex, endIndex) {
+			var islandStart = my.islands[startIndex],
+				islandEnd = my.islands[endIndex],
+				islandEndEl,
+				movePop,
+				endIslandPop,
+				oldOwner,
+				newOwner,
+				pos;
+			//TODO: animation for move, add speed
+			movePop = islandStart.val;
+			if (movePop >= 2) {
+				//only mov if current population is greater or equal to 2
+				movePop = parseInt(movePop / 2, 10);
+				oldOwner = islandEnd.owner;
+				newOwner = islandStart.owner;
+				if (oldOwner === newOwner) {
+					endIslandPop = islandEnd.val + movePop;
+				} else {
+					if (oldOwner === -1) {
+						pos = my.computerIslands.indexOf(islandEnd.index);
+						if (pos >= 0) {
+							my.computerIslands.splice(pos, 1);
+						}
+					}
+					endIslandPop = islandEnd.val - movePop;
+				}
+				if (endIslandPop < 0) {
+					//destination island was conquered
+					islandEndEl = document.getElementById("island" + islandEnd.index);
+					islandEndEl.classList.remove("owner" + oldOwner);
+					islandEndEl.classList.add("owner" + newOwner);
+					islandEnd.owner = newOwner;
+					my.testGameEnd();
+				}
+				islandStart.val = islandStart.val - movePop;
+				my.updateIslandVal("", islandStart);
+				islandEnd.val = Math.abs(endIslandPop);
+				my.updateIslandVal("", islandEnd);
+				my.startGrowRate(islandEnd, true);
+			}
+		},
+		islandSelection: function (e) {
+			/**
+			 * @description Function executed when island is selected
+			 */
+			var islandOuterEl,
+				island,
+				islandIndex;
+			islandOuterEl = e.target;
+			if (islandOuterEl.classList.contains("island")) {
+				islandOuterEl = islandOuterEl.parentNode;
+			}
+			islandIndex = islandOuterEl.getAttribute("data-index");
+			islandIndex = parseInt(islandIndex, 10);
+			if (islandIndex >= 0) {
+				island = my.islands[islandIndex];
+				if (my.startLocationIndex >= 0) {
+					document.getElementById("islandOuter" + my.startLocationIndex).classList.remove("selected");
+					if (islandIndex !== my.startLocationIndex) {
+						//move from my.startLocationIndex to islandIndex
+						my.movePopulation(my.startLocationIndex, islandIndex);
+					}
+					my.startLocationIndex = -1;
+				} else {
+					if (island.owner > 0) {
+						islandOuterEl = document.getElementById("islandOuter" + islandIndex);
+						islandOuterEl.classList.add("selected");
+						my.startLocationIndex = islandIndex;
+					}
+				}
+			}
+		},
 		buildIslands: function () {
 			var islandOuterEl,
 				islandEl,
 				battleEl,
 				islandRad,
 				islandOwner,
-				inslandsNr;
+				inslandsNr,
+				thisIsland;
 			battleEl = IB.Area.getBattleAreaElement();
 			inslandsNr = my.inslandsNr;
 			for (i = 0; i < inslandsNr ; i = i + 1) {
@@ -53,6 +203,7 @@
 					islandOwner = 1;
 				} else if (i === 1) {
 					islandOwner = -1;
+					my.computerIslands.push(i);
 				}
 				if (i > 2) {
 					my.cR = my.generateRandomDim();
@@ -66,12 +217,15 @@
 				}
 				islandOuterEl = document.createElement("DIV");
 				islandOuterEl.setAttribute("class", "islandOuter");
-				islandOuterEl.setAttribute("id", "island" + i);
+				islandOuterEl.setAttribute("id", "islandOuter" + i);
+				islandOuterEl.setAttribute("data-index", i);
 				islandEl = document.createElement("DIV");
 				islandEl.setAttribute("class", "island owner" + islandOwner);
+				islandEl.setAttribute("id", "island" + i);
 				islandOuterEl.appendChild(islandEl);
 				battleEl.appendChild(islandOuterEl);
-				my.islands[i] = {
+				thisIsland = {
+					index: i,
 					owner: islandOwner,
 					rad: my.cR,
 					top: (my.cY[i] - my.cR),
@@ -79,6 +233,16 @@
 					initVal: (my.cR  / 2),
 					val: (my.cR  / 2)
 				};
+				my.islands[i] = thisIsland;
+				my.startGrowRate(thisIsland);
+			}
+		},
+		delegate: function () {
+			var islands = document.querySelectorAll("#battleArea .islandOuter"),
+				islandsLength = islands.length,
+				i;
+			for (i = 0; i < islandsLength; i = i + 1) {
+				islands[i].addEventListener("click", my.islandSelection, false);
 			}
 		},
 		getLoc: function () {
@@ -88,6 +252,8 @@
 			my.w = w;
 			my.h = h;
 			my.buildIslands();
+			my.delegate();
+			my.computerReady = true;
 		},
 		update: function (ratio) {
 			var islandOuterEl,
@@ -101,7 +267,7 @@
 			for (i = 0 ; i < my.inslandsNr; i = i + 1) {
 				thisIsland = my.islands[i];
 				radius = parseInt(thisIsland.initVal * ratio, 10);
-				islandOuterEl = document.getElementById("island" + i);
+				islandOuterEl = document.getElementById("islandOuter" + i);
 				islandOuterEl.style.top = parseInt(thisIsland.top * ratio, 10) + "px";
 				islandOuterEl.style.left = parseInt(thisIsland.left * ratio, 10) + "px";
 				islandOuterEl.style.width = radius * 2 + "px";
@@ -114,7 +280,7 @@
 				islandEl.style.width = islandRad * 2 + "px";
 				islandEl.style.height = islandRad * 2 + "px";
 				islandEl.style.borderRadius = islandRad * 2 + "px";
-				islandEl.innerHTML = thisIsland.val;
+				my.updateIslandVal(islandEl, thisIsland);
 			}
 		}
 	},
@@ -122,7 +288,9 @@
 		return {
 			init: my.init,
 			update: my.update,
-			getLoc: my.getLoc
+			getLoc: my.getLoc,
+			ready: function () { return my.computerReady; },
+			getComputerIslands: function() { return my.computerIslands; }
 		};
 	}());
 	window.IB.Island = Island;

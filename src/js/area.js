@@ -88,6 +88,9 @@
 			IB.Island.update(scaleRatio);
 		},
 		init: function (forUpdate) {
+			/**
+			 * @description Initialize area
+			 */
 			var windowScreenWidth,
 				windowScreenHeight,
 				areaEl,

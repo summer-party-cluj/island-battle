@@ -12,6 +12,7 @@ var IbLoader = function() {
 	if (bodyEl) {
 		addJs("island");
 		addJs("area");
+		addJs("battle");
 		testLoaded();
 	}
 };

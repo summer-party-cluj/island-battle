@@ -6,6 +6,12 @@ body {
 	display: none;
 	background: red;
 	overflow: hidden;
+	-webkit-user-select: none;  /* Chrome all / Safari all */
+	-moz-user-select: none;     /* Firefox all */
+	-ms-user-select: none;      /* IE 10+ */
+	/* No support for these yet, use at own risk */
+	-o-user-select: none;
+	user-select: none;
 }
 #battleArea {
 	background: blue;
@@ -27,6 +33,9 @@ body {
 	left: 0;
 	background: white;
 	border: 0;
+}
+.islandOuter.selected {
+	background: #000;
 }
 .owner-1 {
 	background: red;
